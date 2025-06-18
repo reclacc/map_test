@@ -2,14 +2,13 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Карта с 100 метками</title>
+    <title>Оптимизированная карта с 50 000 меток</title>
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
         html, body {
-            width: 100%;
-            height: 100%;
             margin: 0;
             padding: 0;
+            height: 100%;
         }
         #map { 
             width: 100%;
@@ -18,46 +17,65 @@
     </style>
 </head>
 <body>
-    <div id="map"></div>
+<div id="map"></div>
 
-    <script type="text/javascript">
-        ymaps.ready(init);
+<script>
+ymaps.ready(init);
 
-        function init() {
-            var myMap = new ymaps.Map("map", {
-                center: [55.76, 37.64], // Москва
-                zoom: 10,
-                controls: ['zoomControl', 'typeSelector']
-            });
+function init() {
+    const map = new ymaps.Map("map", {
+        center: [55.76, 37.64], // Москва
+        zoom: 10,
+        controls: ['zoomControl']
+    });
 
-            // Кластеризатор для оптимизации отображения
-            var clusterer = new ymaps.Clusterer({
-                preset: 'islands#invertedVioletClusterIcons'
-            });
+    const balloonContent = `
+        <img src="https://www.shutterstock.com/image-photo/kitten-listens-music-earphones-on-600nw-1416534950.jpg"  
+             width="150" 
+             alt="Котёнок"
+             style="display: block; max-width: 100%; height: auto;">
+        <p style="margin-top: 8px;">Информация о точке</p>
+    `;
 
-            const totalPoints = 50000;
-            const baseLat = 55.76; // базовая широта (Москва)
-            const baseLon = 37.64; // базовая долгота
+    const clusterer = new ymaps.Clusterer({
+        preset: 'islands#invertedVioletClusterIcons',
+        groupByCoordinates: false,           // Не объединять близкие точки на сервере
+        clusterDisableClickZoom: true,       // Отключаем зум при клике на кластер
+        clusterOpenBalloonOnClick: false,    // Не открывать балун кластера по умолчанию
+        gridSize: 128,                       // Размер ячейки кластеризации
+        clusterIconLayout: "default#pieChart"// Используй круговые диаграммы, если нужно
+    });
 
-            for (let i = 0; i < totalPoints; i++) {
-                // Небольшой случайный сдвиг от центральной точки
-                let lat = baseLat + (Math.random() - 0.5) * 0.2;
-                let lon = baseLon + (Math.random() - 0.5) * 0.2;
+    const placemarks = [];
 
-                let placemark = new ymaps.Placemark([lat, lon], {
-                    hintContent: 'Метка #' + (i + 1),
-                    balloonContent: `
-                        <img src="https://www.shutterstock.com/image-photo/kitten-listens-music-earphones-on-600nw-1416534950.jpg"  width="150"><br>
-                        <strong>Описание метки №${i + 1}</strong><br>
-                        Случайное место на карте
-                    `
-                });
+    // Создание 50 000 меток
+    for (let i = 0; i < 50000; i++) {
+        const lat = 55.76 + (Math.random() - 0.5) * 0.2;
+        const lon = 37.64 + (Math.random() - 0.5) * 0.2;
 
-                clusterer.add(placemark);
+        const placemark = new ymaps.Placemark(
+            [lat, lon],
+            {
+                hintContent: 'Кликните, чтобы посмотреть',
+                balloonContent: balloonContent
+            },
+            {
+                iconLayout: 'default#image',
+                iconImageHref: 'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%228%22%20fill%3D%22%23f00%22%2F%3C%2Fsvg%3E', // маленькая SVG-иконка
+                iconImageSize: [16, 16],
+                iconImageOffset: [-8, -8]
             }
+        );
 
-            myMap.geoObjects.add(clusterer);
-        }
-    </script>
+        placemarks.push(placemark);
+    }
+
+    // Добавляем все метки в кластеризатор
+    clusterer.add(placemarks);
+    map.geoObjects.add(clusterer);
+
+    console.log('Загружено 50 000 меток');
+}
+</script>
 </body>
 </html>
